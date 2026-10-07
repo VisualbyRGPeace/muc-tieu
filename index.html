@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mục tiêu">
+<meta name="theme-color" content="#000000">
+<meta name="description" content="Quản lý mục tiêu tuần, tháng, năm. Đồng bộ iPhone và PC.">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<title>Mục tiêu</title>
+<style>
+:root{--bg:#000000;--card:#0a0a0a;--card2:#141414;--line:#2a2a2a;--b:#ffffff;--b2:#d4d4d4;--tx:#ffffff;--mut:#8a8a8a;--ok:#ffffff;--bad:#ffffff;--warn:#a3a3a3}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100%}
+body{padding:env(safe-area-inset-top) 0 0}
+#app{max-width:760px;margin:0 auto;padding:16px 14px calc(96px + env(safe-area-inset-bottom))}
+h1{font-size:22px;margin:0}.sub{color:var(--mut);font-size:13px}
+.top{display:flex;justify-content:space-between;align-items:center;margin:6px 0 16px}
+.ico{background:var(--card2);border:1px solid var(--line);color:var(--tx);border-radius:12px;padding:8px 12px;font-size:13px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;text-align:center}
+.stat b{display:block;font-size:24px}.stat span{font-size:12px;color:var(--mut)}
+.tabs{display:flex;background:var(--card);border-radius:14px;padding:4px;margin-bottom:14px;border:1px solid var(--line)}
+.tabs button{flex:1;border:0;background:none;color:var(--mut);padding:10px;border-radius:10px;font-weight:600;font-size:15px}
+.tabs button.on{background:var(--b);color:#fff}
+.goal{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px;margin-bottom:12px}
+.goal.done{opacity:.8}
+.row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.t{font-weight:700;font-size:17px}.done .t{text-decoration:line-through;color:var(--mut)}
+.chip{font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px;white-space:nowrap}
+.c-ok{background:#ffffff22;color:var(--ok)}.c-bad{background:#ffffff22;color:var(--bad)}.c-b{background:#ffffff22;color:var(--b2)}.c-w{background:#a3a3a322;color:var(--warn)}
+.note{color:var(--mut);font-size:14px;margin:6px 0 0;white-space:pre-wrap}
+.sq{display:grid;grid-template-columns:repeat(20,1fr);gap:4px;margin:12px 0 4px}
+.sq i{aspect-ratio:1;border-radius:4px;background:#1a1a1a}.sq i.f{background:var(--b);box-shadow:0 0 8px #ffffff55}
+.done .sq i.f{background:var(--ok);box-shadow:none}
+.pct{font-size:12px;color:var(--mut);display:flex;justify-content:space-between}
+.btns{display:flex;gap:8px;margin-top:10px}
+.btn{border:0;border-radius:14px;padding:12px;font-weight:700;font-size:15px;color:#fff;background:var(--b);flex:1}
+.btn.g{background:var(--card2);color:var(--b2);border:1px solid var(--line)}.btn.r{background:#ffffff22;color:var(--bad)}
+.fab{position:fixed;right:max(18px,calc(50% - 360px));bottom:calc(22px + env(safe-area-inset-bottom));width:60px;height:60px;border-radius:50%;border:0;background:var(--b);color:#fff;font-size:34px;box-shadow:0 8px 24px #ffffff66}
+.empty{text-align:center;color:var(--mut);padding:40px 0}
+.modal{position:fixed;inset:0;background:#000b;display:none;align-items:flex-end;justify-content:center;z-index:9}
+.modal.on{display:flex}
+.sheet{background:var(--card);width:100%;max-width:560px;border-radius:24px 24px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto}
+@media(min-width:700px){.modal{align-items:center}.sheet{border-radius:24px}}
+label{display:block;font-size:13px;color:var(--mut);margin:12px 0 4px}
+input,select,textarea{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--tx);border-radius:12px;padding:12px;font:inherit;font-size:16px}
+input[type=range]{padding:0;accent-color:var(--b)}
+textarea{min-height:90px;resize:vertical}
+.auth{max-width:380px;margin:12vh auto 0;text-align:center}
+.auth input{margin-bottom:10px}.err{color:var(--bad);font-size:13px;min-height:18px}
+/* ===== Giao diện nâng cao ===== */
+:root{color-scheme:dark;--glow:#ffffff40;--r:20px}
+body{background:radial-gradient(900px 500px at 85% -10%,#ffffff14,transparent 60%),radial-gradient(700px 400px at -10% 30%,#ffffff0d,transparent 60%),var(--bg);background-attachment:fixed}
+#app{max-width:900px}
+h1{background:linear-gradient(90deg,#fff,var(--b2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.4px}
+.top{padding:4px 2px}
+.ico{transition:.2s}.ico:hover{border-color:var(--b);color:var(--b2)}
+.stat{position:relative;overflow:hidden;background:linear-gradient(160deg,#121212,#050505);transition:transform .2s}
+.stat::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--b)}
+.stat:nth-child(1)::before{background:var(--ok)}.stat:nth-child(3)::before{background:var(--bad)}
+.stat:hover{transform:translateY(-2px)}
+.stat b{font-size:28px;letter-spacing:-1px}
+.tabs{position:sticky;top:calc(env(safe-area-inset-top) + 6px);z-index:5;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:#0a0a0acc;box-shadow:0 6px 24px #0008}
+.tabs button{transition:.25s;cursor:pointer}
+.tabs button.on{background:linear-gradient(135deg,var(--b),#cfcfcf);box-shadow:0 4px 14px var(--glow)}
+.tabs button:not(.on):hover{color:var(--tx)}
+#app>.goal,#app>div.goal{animation:up .4s both}
+@keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media(min-width:900px){#app{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+ .top,.stats,.tabs,.empty{grid-column:1/-1}.goal{margin:0}}
+.goal{position:relative;border-radius:var(--r);background:linear-gradient(160deg,#121212,#050505);box-shadow:0 8px 24px #0006;transition:transform .2s,border-color .2s;overflow:hidden}
+.goal::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--b)}
+.goal:has(.c-bad)::before{background:var(--bad)}.goal:has(.c-ok)::before{background:var(--ok)}.goal:has(.c-w)::before{background:var(--warn)}
+.goal:hover{transform:translateY(-2px);border-color:#ffffff66}
+.t{letter-spacing:-.2px}
+.chip{border:1px solid currentColor;border-color:#ffffff14}
+.sq i{transition:background .3s}
+.sq i.f{background:linear-gradient(135deg,var(--b2),var(--b))}
+.done .sq i.f{background:linear-gradient(135deg,#ffffff,var(--ok))}
+.btn{cursor:pointer;transition:transform .12s,filter .2s;background:linear-gradient(135deg,var(--b),#cfcfcf);box-shadow:0 4px 14px var(--glow)}
+.btn:hover{filter:brightness(1.12)}.btn:active{transform:scale(.96)}
+.btn.g,.btn.r{box-shadow:none;background:var(--card2)}.btn.r{background:#ffffff1f}
+.btn.g:hover{border-color:var(--b)}
+.fab{cursor:pointer;background:linear-gradient(135deg,var(--b2),var(--b));transition:transform .2s;z-index:6}
+.fab:hover{transform:rotate(90deg) scale(1.08)}.fab:active{transform:scale(.92)}
+.modal{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:fade .2s}
+.sheet{border:1px solid var(--line);background:linear-gradient(180deg,#121212,#050505);animation:slide .3s cubic-bezier(.2,.8,.2,1)}
+@keyframes fade{from{opacity:0}}@keyframes slide{from{transform:translateY(40px);opacity:0}}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--b);box-shadow:0 0 0 3px var(--glow)}
+.empty{border:1.5px dashed var(--line);border-radius:var(--r);padding:48px 16px}
+.auth{background:linear-gradient(160deg,#121212,#050505);border:1px solid var(--line);border-radius:28px;padding:32px 22px;box-shadow:0 20px 60px #000a}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+button,select{font-family:inherit}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* ===== Thuần trắng đen ===== */
+.btn{color:#000}.btn.g,.btn.r{color:#fff}
+.tabs button.on{color:#000;background:#fff;box-shadow:none}
+.fab{color:#000;background:#fff;box-shadow:0 8px 24px #ffffff33}
+.btn{background:#fff;box-shadow:none}.btn.g,.btn.r{background:var(--card2);border:1px solid var(--line)}
+.chip{border:1px solid #ffffff22}
+.c-bad{background:#fff;color:#000;border-color:#fff}
+.c-ok{background:transparent;color:#fff;border-color:#fff}
+.c-w{background:#ffffff1f;color:#e5e5e5;border:1px dashed #888}
+.c-b{background:#ffffff12;color:#bdbdbd}
+.goal::before{background:#888}.goal:has(.c-bad)::before{background:#fff}.goal:has(.c-ok)::before{background:#444}.goal:has(.c-w)::before{background:#bbb}
+.sq i.f{background:#fff;box-shadow:none}.done .sq i.f{background:#666}
+.stat:nth-child(1)::before{background:#666}.stat:nth-child(2)::before{background:#bbb}.stat:nth-child(3)::before{background:#fff}
+.goal:hover{border-color:#ffffff55}
+body{color-scheme:dark}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+
+<script type="module">
+if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+
+/* ===== 1) DÁN CẤU HÌNH FIREBASE CỦA BẠN VÀO ĐÂY ===== */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT",
+  appId: "YOUR_APP_ID"
+};
+/* ================================================== */
+
+const LOCAL = firebaseConfig.apiKey.startsWith("YOUR");
+const V = "10.12.2", G = `https://www.gstatic.com/firebasejs/${V}/`;
+let fb = {}, uid = null, goals = [], tab = "week", unsub = null;
+
+if (!LOCAL) {
+  const [A, Au, Fs] = await Promise.all([import(G+"firebase-app.js"), import(G+"firebase-auth.js"), import(G+"firebase-firestore.js")]);
+  const app = A.initializeApp(firebaseConfig);
+  fb = { auth: Au.getAuth(app), db: Fs.getFirestore(app), ...Au, ...Fs };
+}
+
+/* ---------- ngày tháng ---------- */
+const iso = d => { const z = new Date(d); z.setMinutes(z.getMinutes() - z.getTimezoneOffset()); return z.toISOString().slice(0, 10); };
+const today = () => iso(new Date());
+const diff = (a, b) => Math.round((new Date(a) - new Date(b)) / 864e5); // a - b (ngày)
+const fmt = s => s.split("-").reverse().slice(0, 2).join("/");
+function endOf(level) {
+  const d = new Date();
+  if (level === "week") d.setDate(d.getDate() + ((7 - d.getDay()) % 7));
+  else if (level === "month") { d.setMonth(d.getMonth() + 1, 0); }
+  else { d.setMonth(11, 31); }
+  return iso(d);
+}
+const LV = { week: "Tuần", month: "Tháng", year: "Năm" };
+
+/* ---------- lưu trữ / đồng bộ ---------- */
+async function save() {
+  if (LOCAL) localStorage.setItem("goals", JSON.stringify(goals));
+  else await fb.setDoc(fb.doc(fb.db, "users", uid), { goals });
+  render();
+}
+function start() {
+  if (LOCAL) { goals = JSON.parse(localStorage.getItem("goals") || "[]"); return render(); }
+  unsub = fb.onSnapshot(fb.doc(fb.db, "users", uid), s => { goals = s.exists() ? s.data().goals || [] : []; render(); });
+}
+if (LOCAL) start();
+else fb.onAuthStateChanged(fb.auth, u => {
+  if (unsub) unsub();
+  uid = u ? u.uid : null;
+  u ? start() : authView();
+});
+
+/* ---------- trạng thái từng mục tiêu ---------- */
+function status(g) {
+  const t = today();
+  if (g.done) {
+    const d = diff(g.due, g.doneAt);
+    if (d > 0) return ["Xong sớm " + d + " ngày", "c-ok"];
+    if (d < 0) return ["Xong trễ " + -d + " ngày", "c-w"];
+    return ["Xong đúng hạn", "c-ok"];
+  }
+  const d = diff(g.due, t);
+  if (d < 0) return ["Trễ " + -d + " ngày", "c-bad"];
+  if (d === 0) return ["Hạn hôm nay", "c-w"];
+  return ["Còn " + d + " ngày", "c-b"];
+}
+
+/* ---------- giao diện ---------- */
+function render() {
+  const t = today(), now = new Date();
+  const all = goals, done = all.filter(g => g.done).length;
+  const late = all.filter(g => !g.done && g.due < t).length;
+  const list = all.filter(g => g.level === tab).sort((a, b) =>
+    (a.done - b.done) || a.due.localeCompare(b.due));
+  const days = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"][now.getDay()];
+  document.getElementById("app").innerHTML = `
+  <div class="top"><div><h1>Hôm nay, ${now.getDate()}/${now.getMonth() + 1}</h1><div class="sub">${days} · ${LOCAL ? "Chế độ local (chưa đồng bộ)" : "Đã đồng bộ ☁️"}</div></div>
+  ${LOCAL ? "" : '<button class="ico" id="out">Thoát</button>'}</div>
+  <div class="stats">
+    <div class="stat"><b style="color:var(--ok)">${done}</b><span>Hoàn thành</span></div>
+    <div class="stat"><b style="color:var(--b2)">${all.length - done - late}</b><span>Đang làm</span></div>
+    <div class="stat"><b style="color:var(--bad)">${late}</b><span>Trễ hạn</span></div>
+  </div>
+  <div class="tabs">${Object.entries(LV).map(([k, v]) => `<button data-t="${k}" class="${k === tab ? "on" : ""}">${v}</button>`).join("")}</div>
+  ${list.length ? list.map(card).join("") : `<div class="empty">Chưa có mục tiêu ${LV[tab].toLowerCase()}.<br>Bấm + để thêm.</div>`}
+  <button class="fab" id="add">+</button>`;
+  document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => { tab = b.dataset.t; render(); });
+  document.getElementById("add").onclick = () => edit();
+  const o = document.getElementById("out"); if (o) o.onclick = () => fb.signOut(fb.auth);
+  document.querySelectorAll("[data-done]").forEach(b => b.onclick = () => toggle(b.dataset.done));
+  document.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => edit(b.dataset.edit));
+}
+function card(g) {
+  const [txt, cls] = status(g), f = Math.round(g.progress / 5);
+  return `<div class="goal ${g.done ? "done" : ""}">
+    <div class="row"><div><div class="t">${esc(g.title)}</div><div class="sub">${LV[g.level]} · Hạn ${fmt(g.due)}</div></div><span class="chip ${cls}">${txt}</span></div>
+    ${g.note ? `<div class="note">${esc(g.note)}</div>` : ""}
+    <div class="sq">${Array.from({ length: 20 }, (_, i) => `<i class="${i < f ? "f" : ""}"></i>`).join("")}</div>
+    <div class="pct"><span>Tiến độ</span><span>${g.progress}%</span></div>
+    <div class="btns"><button class="btn" data-done="${g.id}">${g.done ? "↩ Hoàn tác" : "✓ Xong"}</button><button class="btn g" data-edit="${g.id}">✎ Ghi chú / Sửa</button></div>
+  </div>`;
+}
+const esc = s => (s || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function toggle(id) {
+  const g = goals.find(x => x.id === id);
+  g.done = !g.done; g.doneAt = g.done ? today() : null;
+  if (g.done) g.progress = 100;
+  save();
+}
+
+/* ---------- thêm / sửa ---------- */
+function edit(id) {
+  const g = goals.find(x => x.id === id) || { id: "", title: "", level: tab, due: endOf(tab), note: "", progress: 0 };
+  const m = document.getElementById("modal"), s = document.getElementById("sheet");
+  s.innerHTML = `<h1>${id ? "Sửa mục tiêu" : "Mục tiêu mới"}</h1>
+  <label>Tên mục tiêu</label><input id="f-t" value="${esc(g.title)}" placeholder="VD: Đọc 12 cuốn sách">
+  <label>Loại</label><select id="f-l">${Object.entries(LV).map(([k, v]) => `<option value="${k}" ${k === g.level ? "selected" : ""}>${v}</option>`).join("")}</select>
+  <label>Hạn hoàn thành</label><input type="date" id="f-d" value="${g.due}">
+  <label>Tiến độ: <b id="f-pv">${g.progress}</b>%</label><input type="range" id="f-p" min="0" max="100" step="5" value="${g.progress}">
+  <label>Ghi chú</label><textarea id="f-n" placeholder="Ghi chú, kế hoạch, tiến độ...">${esc(g.note)}</textarea>
+  <div class="btns"><button class="btn g" id="f-c">Hủy</button>${id ? '<button class="btn r" id="f-x">Xóa</button>' : ""}<button class="btn" id="f-s">Lưu</button></div>`;
+  m.classList.add("on");
+  const $ = i => document.getElementById(i);
+  $("f-p").oninput = e => $("f-pv").textContent = e.target.value;
+  if (!id) $("f-l").onchange = e => $("f-d").value = endOf(e.target.value);
+  $("f-c").onclick = () => m.classList.remove("on");
+  m.onclick = e => { if (e.target === m) m.classList.remove("on"); };
+  if (id) $("f-x").onclick = () => { if (confirm("Xóa mục tiêu này?")) { goals = goals.filter(x => x.id !== id); m.classList.remove("on"); save(); } };
+  $("f-s").onclick = () => {
+    const t = $("f-t").value.trim(); if (!t) return $("f-t").focus();
+    const o = { ...g, title: t, level: $("f-l").value, due: $("f-d").value || endOf($("f-l").value), progress: +$("f-p").value, note: $("f-n").value };
+    if (o.progress === 100 && !o.done) { o.done = true; o.doneAt = today(); }
+    else if (o.progress < 100 && o.done) { o.done = false; o.doneAt = null; }
+    if (id) goals = goals.map(x => x.id === id ? o : x);
+    else { o.id = Date.now().toString(36); o.created = today(); o.done = o.done || false; goals.push(o); tab = o.level; }
+    m.classList.remove("on"); save();
+  };
+}
+
+/* ---------- đăng nhập ---------- */
+function authView() {
+  document.getElementById("app").innerHTML = `<div class="auth"><h1 style="font-size:30px">🎯 Mục tiêu</h1><p class="sub">Đăng nhập để đồng bộ giữa iPhone và máy tính</p>
+  <input id="em" type="email" placeholder="Email" autocomplete="email"><input id="pw" type="password" placeholder="Mật khẩu (≥ 6 ký tự)" autocomplete="current-password">
+  <div class="err" id="er"></div>
+  <div class="btns"><button class="btn" id="li">Đăng nhập</button><button class="btn g" id="su">Đăng ký</button></div></div>`;
+  const go = fn => async () => {
+    try { await fn(fb.auth, document.getElementById("em").value, document.getElementById("pw").value); }
+    catch (e) { document.getElementById("er").textContent = "Lỗi: " + e.code.replace("auth/", ""); }
+  };
+  document.getElementById("li").onclick = go(fb.signInWithEmailAndPassword);
+  document.getElementById("su").onclick = go(fb.createUserWithEmailAndPassword);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "Mục tiêu – Tuần, Tháng, Năm",
+  "short_name": "Mục tiêu",
+  "description": "Quản lý mục tiêu và tiến độ theo tuần, tháng, năm. Đồng bộ iPhone và PC.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "lang": "vi",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
