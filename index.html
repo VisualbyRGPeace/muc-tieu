@@ -159,7 +159,46 @@ body{letter-spacing:-.005em;-webkit-font-smoothing:antialiased}
 .hero h2,.t{font-weight:700;letter-spacing:-.02em}
 .stat b,.ring text{font-weight:800}
 .chips button,.nav button,.btn{letter-spacing:0}
+/* ===== v3: tổng quan + animation ===== */
+.cardx{background:linear-gradient(160deg,#181818,#0a0a0a);border:1px solid var(--line);border-radius:26px;padding:16px 10px;margin-bottom:14px;grid-column:1/-1;box-shadow:0 10px 30px #0008}
+.rings{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.rg{background:none;border:0;color:#fff;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:8px 4px;border-radius:18px;transition:background .2s,transform .2s}
+.rg:hover{background:#ffffff0d}.rg:active{transform:scale(.95)}
+.rg .ring{width:100%;max-width:108px;height:auto}.rg b{font-size:15px;font-weight:700}.rg span{font-size:12px;color:var(--mut)}
+.kps{display:grid;grid-template-columns:1fr 1fr;gap:10px;grid-column:1/-1}
+@media(min-width:700px){.kps{grid-template-columns:repeat(4,1fr)}}
+.kp{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:2px}
+.kp svg{color:var(--mut);margin-bottom:8px}.kp b{font-size:34px;font-weight:800;letter-spacing:-.04em;line-height:1}
+.kp span{font-weight:600;font-size:14px;margin-top:4px}.kp small{color:var(--mut);font-size:12px}
+.kp.hot{background:#fff;color:#000}.kp.hot svg,.kp.hot small{color:#000a}
+.sec{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;margin:24px 2px 10px;grid-column:1/-1}
+.sec em{font-style:normal;background:#ffffff1a;border-radius:99px;padding:1px 9px;font-size:12px;color:#ddd}
+.lst{grid-column:1/-1;display:flex;flex-direction:column;gap:10px}
+@media(min-width:900px){.lst{display:grid;grid-template-columns:1fr 1fr}}
+.rw{display:flex;align-items:center;gap:12px;background:linear-gradient(160deg,#121212,#050505);border:1px solid var(--line);border-radius:18px;padding:12px;cursor:pointer;transition:transform .2s,border-color .2s}
+.rw:hover{border-color:#ffffff55;transform:translateY(-2px)}.rw:active{transform:scale(.98)}
+.rw .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
+.rw .chip{margin-top:6px;font-size:11px;padding:3px 9px;width:fit-content}
+.ok{display:flex;gap:8px;align-items:center;justify-content:center;color:var(--mut);border:1.5px dashed var(--line);border-radius:18px;padding:22px;grid-column:1/-1}
+/* nav: ô trắng trượt mượt */
+.nav{width:min(460px,calc(100% - 28px))}
+.nav::before{content:"";position:absolute;top:6px;bottom:6px;left:6px;width:calc((100% - 24px)/4);background:#fff;border-radius:20px;transform:translateX(calc(var(--idx,0)*(100% + 4px)));transition:transform .5s cubic-bezier(.34,1.35,.64,1)}
+.nav button{position:relative;z-index:1}.nav button.on{background:none;color:#000}
+.nav button svg{transition:transform .3s}.nav button.on svg{transform:translateY(-1px) scale(1.1)}
+/* animation */
+@keyframes up2{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes fill{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes pop{0%{transform:scale(1)}35%{transform:scale(1.04);box-shadow:0 0 0 3px #fff}100%{transform:scale(1)}}
+#app:not(.enter)>.goal:not(.pop),#app:not(.enter)>div.goal:not(.pop){animation:none}
+.enter .hero,.enter .cardx,.enter .kp,.enter .chips,.enter .sec,.enter .goal,.enter .rw,.enter .ok,.enter .empty{animation:up2 .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*55ms)}
+.enter .sq i.f{animation:fill .45s cubic-bezier(.34,1.5,.64,1) both;animation-delay:calc(300ms + var(--k,0)*28ms)}
+#app .goal.pop,#app .rw.pop{animation:pop .7s cubic-bezier(.2,.8,.2,1)}
+.ring circle+circle{transition:stroke-dashoffset 1.1s cubic-bezier(.2,.8,.2,1)}
+.sheet{animation:slide .5s cubic-bezier(.34,1.3,.64,1)}
+.btn:active,.ib:active,.chips button:active{transform:scale(.93)}
+.fab{animation:fabin .6s .3s cubic-bezier(.34,1.6,.64,1) both}@keyframes fabin{from{transform:scale(0) rotate(-90deg)}}
 </style>
+
 
 </head>
 <body>
@@ -182,7 +221,7 @@ const firebaseConfig = {
 
 const LOCAL = firebaseConfig.apiKey.startsWith("YOUR");
 const V = "10.12.2", G = `https://www.gstatic.com/firebasejs/${V}/`;
-let fb = {}, uid = null, goals = [], tab = "week", unsub = null;
+let fb = {}, uid = null, goals = [], tab = "home", unsub = null;
 
 if (!LOCAL) {
   const [A, Au, Fs] = await Promise.all([import(G+"firebase-app.js"), import(G+"firebase-auth.js"), import(G+"firebase-firestore.js")]);
@@ -239,6 +278,7 @@ function status(g) {
 /* ---------- icon (line, kiểu Lucide) ---------- */
 var P = {
 target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+home:'<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
 plus:'<path d="M5 12h14M12 5v14"/>',check:'<path d="M20 6 9 17l-5-5"/>',
 undo:'<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/>',
 edit:'<path d="M12 20h9"/><path d="M16.4 3.6a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
@@ -260,6 +300,7 @@ const esc = s => (s || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 
 /* ---------- giao diện ---------- */
 function render() {
+  if (tab === "home") return renderHome();
   const t = today(), now = new Date();
   const inTab = goals.filter(g => g.level === tab);
   const dn = inTab.filter(g => g.done).length, lt = inTab.filter(g => !g.done && g.due < t).length, dg = inTab.length - dn - lt;
@@ -272,8 +313,7 @@ function render() {
   const wd = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"][now.getDay()];
   const C = 2 * Math.PI * 34;
   document.getElementById("app").innerHTML = `
-  <div class="top"><div><h1>Tháng ${now.getMonth() + 1}</h1><button class="lnk" data-t="year">Xem cả năm ▾</button><div class="today">Hôm nay: <b>${wd}, ${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}</b></div></div>
-  <div style="display:flex;gap:8px;align-items:center">${LOCAL ? '<span class="sub">Local</span>' : `<span class="sub">${ic("cloud", 14)} Đã đồng bộ</span><button class="ib" id="out" title="Đăng xuất">${ic("out", 17)}</button>`}</div></div>
+  ${topH()}
   <div class="hero">
     <svg class="ring" viewBox="0 0 80 80"><circle cx="40" cy="40" r="34" fill="none" stroke="#222" stroke-width="7"/>
     <circle cx="40" cy="40" r="34" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - pct / 100)}" transform="rotate(-90 40 40)"/>
@@ -284,23 +324,92 @@ function render() {
   <div class="chips">${Object.keys(FL).map(k => `<button data-f="${k}" class="${k === flt ? "on" : ""}">${FL[k]} <em>${N[k]}</em></button>`).join("")}</div>
   ${list.length ? list.map(card).join("") : `<div class="empty">${ic("target", 44)}<br>${inTab.length ? "Không có mục tiêu ở bộ lọc này." : "Chưa có mục tiêu " + LV[tab].toLowerCase() + ".<br>Bấm nút + để thêm."}</div>`}
   <button class="fab" id="add" title="Thêm mục tiêu">${ic("plus", 28)}</button>
-  <nav class="nav">${Object.keys(LV).map(k => `<button data-t="${k}" class="${k === tab ? "on" : ""}">${ic(LI[k], 22)}<span>${LV[k]}</span></button>`).join("")}</nav>`;
-  document.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { tab = b.dataset.t; flt = "all"; render(); scrollTo(0, 0); });
-  document.querySelectorAll("[data-f]").forEach(b => b.onclick = () => { flt = b.dataset.f; render(); });
+  `;
+  bindAll();
+}
+/* ---------- Tổng quan + điều hướng + hiệu ứng ---------- */
+var pop = null, seen = "";
+var WD = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+var TABS = [["home", "Tổng quan", "home"], ["week", "Tuần", "week"], ["month", "Tháng", "month"], ["year", "Năm", "year"]];
+const sico = c => c === "c-bad" ? "alert" : c === "c-ok" ? "trophy" : "clock";
+function topH() {
+  const n = new Date(), h = tab === "home";
+  return `<div class="top"><div><h1>Tháng ${n.getMonth() + 1}</h1><button class="lnk" data-t="${h ? "year" : "home"}">${h ? "Xem cả năm ▾" : "← Tổng quan"}</button>
+  <div class="today">Hôm nay: <b>${WD[n.getDay()]}, ${n.getDate()}/${n.getMonth() + 1}/${n.getFullYear()}</b></div></div>
+  <div style="display:flex;gap:8px;align-items:center">${LOCAL ? '<span class="sub">Local</span>' : `<span class="sub">${ic("cloud", 14)} Đã đồng bộ</span><button class="ib" id="out" title="Đăng xuất">${ic("out", 17)}</button>`}</div></div>`;
+}
+function row(g) {
+  const [txt, cls] = status(g);
+  return `<div class="rw ${g.id === pop ? "pop" : ""}" data-edit="${g.id}"><div class="gi">${ic(LI[g.level], 18)}</div>
+  <div class="gm"><div class="t">${esc(g.title)}</div><div class="sub">${LV[g.level]} · Hạn ${fmt(g.due)}</div><span class="chip ${cls}">${ic(sico(cls), 13)}${txt}</span></div>
+  <button class="ib" data-done="${g.id}" title="${g.done ? "Hoàn tác" : "Hoàn thành"}">${ic(g.done ? "undo" : "check", 16)}</button></div>`;
+}
+function renderHome() {
+  const t = today(), A = goals, C = 2 * Math.PI * 34;
+  const lv = k => { const a = A.filter(g => g.level === k); return { n: a.length, d: a.filter(g => g.done).length, p: a.length ? Math.round(a.reduce((s, g) => s + (g.done ? 100 : g.progress), 0) / a.length) : 0 }; };
+  const rings = Object.keys(LV).map(k => { const s = lv(k); return `<button class="rg" data-t="${k}"><svg class="ring" viewBox="0 0 80 80"><circle cx="40" cy="40" r="34" fill="none" stroke="#222" stroke-width="8"/><circle cx="40" cy="40" r="34" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - s.p / 100)}" transform="rotate(-90 40 40)"/><text x="40" y="46" text-anchor="middle" fill="#fff" font-size="19" font-weight="800">${s.p}%</text></svg><b>${LV[k]}</b><span>${s.d}/${s.n} xong</span></button>`; }).join("");
+  const late = A.filter(g => !g.done && g.due < t), soon = A.filter(g => !g.done && g.due >= t && diff(g.due, t) <= 7);
+  const dn = A.filter(g => g.done), early = dn.filter(g => diff(g.due, g.doneAt) > 0), lateD = dn.filter(g => diff(g.due, g.doneAt) < 0);
+  const sum = (a, f) => a.reduce((s, g) => s + Math.abs(f(g)), 0);
+  const K = [["alert", late.length, "Trễ hạn", sum(late, g => diff(g.due, t)) + " ngày cộng dồn", 1], ["clock", soon.length, "Sắp đến hạn", "trong 7 ngày tới", 0],
+    ["trophy", early.length, "Xong sớm", sum(early, g => diff(g.due, g.doneAt)) + " ngày sớm", 0], ["cal", lateD.length, "Xong trễ", sum(lateD, g => diff(g.due, g.doneAt)) + " ngày trễ", 0]];
+  const att = A.filter(g => !g.done && diff(g.due, t) <= 7).sort((a, b) => a.due.localeCompare(b.due)).slice(0, 8);
+  const rec = dn.slice().sort((a, b) => (b.doneAt || "").localeCompare(a.doneAt || "")).slice(0, 4);
+  document.getElementById("app").innerHTML = `${topH()}
+  <div class="cardx rings">${rings}</div>
+  <div class="kps">${K.map(([i, n, l, s, h]) => `<div class="kp ${h && n ? "hot" : ""}">${ic(i, 20)}<b data-n="${n}">${n}</b><span>${l}</span><small>${s}</small></div>`).join("")}</div>
+  <div class="sec">${ic("alert", 16)}Cần chú ý<em>${att.length}</em></div>
+  <div class="lst">${att.length ? att.map(row).join("") : `<div class="ok">${ic("check", 18)} Không có mục nào trễ hoặc sắp đến hạn</div>`}</div>
+  <div class="sec">${ic("trophy", 16)}Vừa hoàn thành</div>
+  <div class="lst">${rec.length ? rec.map(row).join("") : `<div class="ok">Chưa có mục nào hoàn thành</div>`}</div>
+  <button class="fab" id="add" title="Thêm mục tiêu">${ic("plus", 28)}</button>`;
+  bindAll();
+}
+function go(t) { tab = t; flt = "all"; render(); scrollTo({ top: 0, behavior: "smooth" }); }
+function setNav() {
+  let n = document.getElementById("nav");
+  if (!n) {
+    n = document.createElement("nav"); n.className = "nav"; n.id = "nav";
+    n.innerHTML = TABS.map(([k, l, i]) => `<button data-k="${k}">${ic(i, 22)}<span>${l}</span></button>`).join("");
+    document.body.appendChild(n); n.querySelectorAll("button").forEach(b => b.onclick = () => go(b.dataset.k));
+  }
+  n.style.setProperty("--idx", TABS.findIndex(x => x[0] === tab));
+  n.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.k === tab));
+}
+function bindAll() {
+  const $ = s => document.querySelectorAll(s);
+  $("#app [data-t]").forEach(b => b.onclick = () => go(b.dataset.t));
+  $("[data-f]").forEach(b => b.onclick = () => { flt = b.dataset.f; render(); });
   document.getElementById("add").onclick = () => edit();
   const o = document.getElementById("out"); if (o) o.onclick = () => fb.signOut(fb.auth);
-  document.querySelectorAll("[data-done]").forEach(b => b.onclick = () => toggle(b.dataset.done));
-  document.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => edit(b.dataset.edit));
+  $("[data-done]").forEach(b => b.onclick = e => { e.stopPropagation(); toggle(b.dataset.done); });
+  $("[data-edit]").forEach(b => b.onclick = () => edit(b.dataset.edit));
+  setNav(); animate();
 }
+function animate() {
+  const app = document.getElementById("app"), first = seen !== tab; seen = tab;
+  app.classList.toggle("enter", first); if (!first) return;
+  app.querySelectorAll(".hero,.cardx,.kp,.chips,.sec,.goal,.rw,.ok,.empty").forEach((el, i) => el.style.setProperty("--i", Math.min(i, 12)));
+  app.querySelectorAll("svg.ring circle:nth-of-type(2)").forEach(c => {
+    const to = c.getAttribute("stroke-dashoffset"); c.style.strokeDashoffset = c.getAttribute("stroke-dasharray");
+    requestAnimationFrame(() => requestAnimationFrame(() => c.style.strokeDashoffset = to));
+  });
+  app.querySelectorAll("[data-n]").forEach(el => {
+    const n = +el.dataset.n, t0 = performance.now() + 250; el.textContent = 0;
+    const f = t => { const k = Math.max(0, Math.min(1, (t - t0) / 800)); el.textContent = Math.round(n * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(f); };
+    requestAnimationFrame(f);
+  });
+}
+
 function card(g) {
   const [txt, cls] = status(g), f = Math.round(g.progress / 5);
   const si = cls === "c-bad" ? "alert" : cls === "c-ok" ? "trophy" : "clock";
-  return `<div class="goal ${g.done ? "done" : ""}">
+  return `<div class="goal ${g.done ? "done" : ""} ${g.id === pop ? "pop" : ""}">
     <div class="row"><div class="gi">${ic(LI[g.level], 20)}</div>
       <div class="gm"><div class="t">${esc(g.title)}</div><div class="sub">${ic("cal", 13)} Hạn ${fmt(g.due)}${g.done ? " · Xong " + fmt(g.doneAt) : ""}</div></div>
       <button class="ib" data-edit="${g.id}" title="Sửa / ghi chú">${ic("edit", 16)}</button></div>
     ${g.note ? `<div class="note">${esc(g.note)}</div>` : ""}
-    <div class="sq">${Array.from({ length: 20 }, (_, i) => `<i class="${i < f ? "f" : ""}"></i>`).join("")}</div>
+    <div class="sq">${Array.from({ length: 20 }, (_, i) => `<i class="${i < f ? "f" : ""}" style="--k:${i}"></i>`).join("")}</div>
     <div class="pct"><span>Tiến độ</span><span>${g.progress}%</span></div>
     <div class="foot"><span class="chip ${cls}">${ic(si, 14)}${txt}</span>
       <button class="btn sm ${g.done ? "g" : ""}" data-done="${g.id}">${ic(g.done ? "undo" : "check", 16)}${g.done ? "Hoàn tác" : "Hoàn thành"}</button></div>
@@ -310,13 +419,14 @@ function card(g) {
 function toggle(id) {
   const g = goals.find(x => x.id === id);
   g.done = !g.done; g.doneAt = g.done ? today() : null;
+  pop = g.done ? id : null; setTimeout(() => pop = null, 1000);
   if (g.done) g.progress = 100;
   save();
 }
 
 /* ---------- thêm / sửa ---------- */
 function edit(id) {
-  const g = goals.find(x => x.id === id) || { id: "", title: "", level: tab, due: endOf(tab), note: "", progress: 0 };
+  const g = goals.find(x => x.id === id) || { id: "", title: "", level: tab === "home" ? "week" : tab, due: endOf(tab === "home" ? "week" : tab), note: "", progress: 0 };
   let lv = g.level;
   const m = document.getElementById("modal"), s = document.getElementById("sheet");
   s.innerHTML = `<div class="row" style="align-items:center"><h1>${id ? "Sửa mục tiêu" : "Mục tiêu mới"}</h1><button class="ib" id="f-c">${ic("x", 18)}</button></div>
@@ -349,6 +459,7 @@ function edit(id) {
 
 /* ---------- đăng nhập ---------- */
 function authView() {
+  document.getElementById("nav")?.remove();
   document.getElementById("app").innerHTML = `<div class="auth"><h1 style="font-size:30px">${ic("target",34)} Mục tiêu</h1><p class="sub">Đăng nhập để đồng bộ giữa iPhone và máy tính</p>
   <input id="em" type="email" placeholder="Email" autocomplete="email"><input id="pw" type="password" placeholder="Mật khẩu (≥ 6 ký tự)" autocomplete="current-password">
   <div class="err" id="er"></div>
