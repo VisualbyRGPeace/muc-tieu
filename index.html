@@ -220,7 +220,25 @@ body{letter-spacing:-.005em;-webkit-font-smoothing:antialiased}
 @keyframes grow{from{width:0}}@keyframes kn{from{left:0}}
 .enter .fill{animation:grow 1s .3s cubic-bezier(.2,.8,.2,1) both}
 .enter .knob{animation:kn 1s .3s cubic-bezier(.2,.8,.2,1) both}
+/* ===== Header gọn + lịch ===== */
+.top{margin-bottom:16px;align-items:flex-start}
+.mbtn{display:inline-flex;align-items:center;gap:8px;background:var(--card2);border:1px solid var(--line);color:#fff;border-radius:99px;padding:9px 14px;font-weight:700;font-size:15px;cursor:pointer;transition:.2s}
+.mbtn:hover{border-color:#fff}.mbtn:active{transform:scale(.95)}
+.lnk{display:block;padding:10px 0 0}
+.today{margin-top:10px;font-size:13px}
+.ct{font-size:20px;margin:0}
+.cg{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:12px}
+.cg.wk span{text-align:center;font-size:12px;color:var(--mut);font-weight:600}
+.cd{position:relative;height:44px;border:0;background:var(--card2);color:#fff;border-radius:12px;font-weight:600;font-size:15px;cursor:pointer;transition:background .15s,transform .15s}
+.cd:hover{background:#2a2a2a}.cd:active{transform:scale(.92)}
+.cd.td{box-shadow:inset 0 0 0 1.5px #fff}.cd.sl{background:#fff;color:#000}
+.dot{position:absolute;bottom:5px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:#fff}
+.dot.dn{background:#666}.dot.lt{width:7px;height:7px;margin-left:-3.5px;bottom:4px;background:none;border:1.5px solid #fff}
+.cd.sl .dot{background:#000}.cd.sl .dot.lt{background:none;border-color:#000}.cd.sl .dot.dn{background:#777}
+.cl{display:flex;gap:16px;justify-content:center;margin-top:12px;font-size:12px;color:var(--mut)}
+.cl span{display:flex;align-items:center;gap:6px}.cl .dot{position:static;margin:0;display:inline-block}
 </style>
+
 
 
 
@@ -303,7 +321,7 @@ function status(g) {
 var P = {
 target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
 home:'<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
-plus:'<path d="M5 12h14M12 5v14"/>',check:'<path d="M20 6 9 17l-5-5"/>',
+plus:'<path d="M5 12h14M12 5v14"/>',chev:'<path d="m6 9 6 6 6-6"/>',l:'<path d="m15 18-6-6 6-6"/>',r:'<path d="m9 18 6-6-6-6"/>',check:'<path d="M20 6 9 17l-5-5"/>',
 undo:'<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/>',
 edit:'<path d="M12 20h9"/><path d="M16.4 3.6a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
 trash:'<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>',
@@ -358,9 +376,38 @@ var TABS = [["home", "Tổng quan", "home"], ["week", "Tuần", "week"], ["month
 const sico = c => c === "c-bad" ? "alert" : c === "c-ok" ? "trophy" : "clock";
 function topH() {
   const n = new Date(), h = tab === "home";
-  return `<div class="top"><div><h1>Tháng ${n.getMonth() + 1}</h1><button class="lnk" data-t="${h ? "year" : "home"}">${h ? "Xem cả năm ▾" : "← Tổng quan"}</button>
+  return `<div class="top"><div><button class="mbtn" id="mth" title="Mở lịch">${ic("cal", 16)}<span>Tháng ${n.getMonth() + 1}, ${n.getFullYear()}</span>${ic("chev", 14)}</button>
+  ${h ? "" : '<button class="lnk" data-t="home">← Tổng quan</button>'}
   <div class="today">Hôm nay: <b>${WD[n.getDay()]}, ${n.getDate()}/${n.getMonth() + 1}/${n.getFullYear()}</b></div></div>
   <div style="display:flex;gap:8px;align-items:center">${LOCAL ? '<span class="sub">Local</span>' : `<span class="sub">${ic("cloud", 14)} Đã đồng bộ</span><button class="ib" id="out" title="Đăng xuất">${ic("out", 17)}</button>`}</div></div>`;
+}
+/* ---------- Lịch tháng: xem hạn từng ngày ---------- */
+function calendar(y, m, sel) {
+  const n = new Date(), t = today(); y = y ?? n.getFullYear(); m = m ?? n.getMonth(); sel = sel || t;
+  const off = (new Date(y, m, 1).getDay() + 6) % 7, dim = new Date(y, m + 1, 0).getDate(), by = {};
+  goals.forEach(g => (by[g.due] = by[g.due] || []).push(g));
+  let cells = "<i></i>".repeat(off);
+  for (let d = 1; d <= dim; d++) {
+    const k = iso(new Date(y, m, d)), a = by[k] || [];
+    const c = !a.length ? "" : a.some(g => !g.done && k < t) ? "lt" : a.some(g => !g.done) ? "op" : "dn";
+    cells += `<button class="cd ${k === t ? "td" : ""} ${k === sel ? "sl" : ""}" data-d="${k}">${d}${c ? `<span class="dot ${c}"></span>` : ""}</button>`;
+  }
+  const sd = new Date(sel + "T00:00"), list = by[sel] || [];
+  const m0 = document.getElementById("modal"), s = document.getElementById("sheet"), $ = i => document.getElementById(i);
+  s.innerHTML = `<div class="row" style="align-items:center"><button class="ib" id="c-p">${ic("l", 18)}</button><h1 class="ct">Tháng ${m + 1}, ${y}</h1><button class="ib" id="c-n">${ic("r", 18)}</button></div>
+  <div class="cg wk">${["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map(x => `<span>${x}</span>`).join("")}</div>
+  <div class="cg">${cells}</div>
+  <div class="cl"><span><i class="dot op"></i>Đang chờ</span><span><i class="dot lt"></i>Trễ hạn</span><span><i class="dot dn"></i>Đã xong</span></div>
+  <div class="sec" style="margin-top:14px">${WD[sd.getDay()]}, ${sd.getDate()}/${sd.getMonth() + 1}<em>${list.length}</em></div>
+  <div class="lst">${list.length ? list.map(row).join("") : `<div class="ok">Không có mục tiêu nào hạn ngày này</div>`}</div>
+  <div class="btns" style="margin-top:14px"><button class="btn g" id="c-t">Hôm nay</button><button class="btn" id="c-a">${ic("plus", 18)}Thêm hạn ngày này</button></div>`;
+  m0.classList.add("on"); m0.onclick = e => { if (e.target === m0) m0.classList.remove("on"); };
+  const mv = k => { const d = new Date(y, m + k, 1); calendar(d.getFullYear(), d.getMonth(), sel); };
+  $("c-p").onclick = () => mv(-1); $("c-n").onclick = () => mv(1); $("c-t").onclick = () => calendar();
+  $("c-a").onclick = () => { m0.classList.remove("on"); edit("", sel); };
+  s.querySelectorAll("[data-d]").forEach(b => b.onclick = () => calendar(y, m, b.dataset.d));
+  s.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => { m0.classList.remove("on"); edit(b.dataset.edit); });
+  s.querySelectorAll("[data-done]").forEach(b => b.onclick = e => { e.stopPropagation(); toggle(b.dataset.done); calendar(y, m, sel); });
 }
 function row(g) {
   const [txt, cls] = status(g);
@@ -408,6 +455,7 @@ function bindAll() {
   const o = document.getElementById("out"); if (o) o.onclick = () => fb.signOut(fb.auth);
   $("[data-done]").forEach(b => b.onclick = e => { e.stopPropagation(); toggle(b.dataset.done); });
   $("[data-edit]").forEach(b => b.onclick = () => edit(b.dataset.edit));
+  const mb = document.getElementById("mth"); if (mb) mb.onclick = () => calendar();
   bindProg(); setNav(); animate();
 }
 function animate() {
@@ -485,8 +533,9 @@ function toggle(id) {
 }
 
 /* ---------- thêm / sửa ---------- */
-function edit(id) {
+function edit(id, due) {
   const g = goals.find(x => x.id === id) || { id: "", title: "", level: tab === "home" ? "week" : tab, due: endOf(tab === "home" ? "week" : tab), note: "", progress: 0 };
+  if (!id && due) g.due = due;
   let lv = g.level;
   const m = document.getElementById("modal"), s = document.getElementById("sheet");
   s.innerHTML = `<div class="row" style="align-items:center"><h1>${id ? "Sửa mục tiêu" : "Mục tiêu mới"}</h1><button class="ib" id="f-c">${ic("x", 18)}</button></div>
@@ -501,7 +550,7 @@ function edit(id) {
   $("f-p").oninput = e => $("f-pv").textContent = e.target.value;
   s.querySelectorAll("[data-lv]").forEach(b => b.onclick = () => {
     lv = b.dataset.lv; s.querySelectorAll("[data-lv]").forEach(x => x.classList.toggle("on", x === b));
-    if (!id) $("f-d").value = endOf(lv);
+    if (!id && !due) $("f-d").value = endOf(lv);
   });
   $("f-c").onclick = () => m.classList.remove("on");
   m.onclick = e => { if (e.target === m) m.classList.remove("on"); };
