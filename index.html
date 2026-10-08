@@ -486,7 +486,7 @@ function progH(g) {
   if (ex !== null) { const d = p - ex; pc += (pc ? " · " : "") + `Nên đạt ~${ex}% · ` + (d >= 10 ? `Vượt ${d}%` : d <= -10 ? `Chậm ${-d}%` : "Đúng kế hoạch"); }
   if (!pc) pc = "Kéo thanh hoặc bấm +10 để cập nhật";
   return `<div class="prog"><div class="ph"><span class="stg ${k}">${st}</span><span class="pv"><b>${p}</b>%</span></div>
-  <div class="pbar" data-bar="${g.id}"><div class="trk"><i class="fill" style="width:${p}%"></i></div>${[25, 50, 75].map(m => `<em class="tk" style="left:${m}%"></em>`).join("")}${ex !== null ? `<em class="mk" style="left:${ex}%" title="Mức nên đạt hôm nay"></em>` : ""}<em class="knob" style="left:${p}%"></em></div>
+  <div class="pbar" data-bar="${g.id}"><div class="trk"><i class="fill" style="width:${p}%"></i></div>${[25, 50, 75].map(m => `<em class="tk" style="left:${m}%"></em>`).join("")}<em class="knob" style="left:${p}%"></em></div>
   <div class="pf"><span>${pc}</span><div class="stp"><button data-step="${g.id}" data-d="-10">−10</button><button data-step="${g.id}" data-d="10">+10</button></div></div></div>`;
 }
 function setProg(id, p) {
