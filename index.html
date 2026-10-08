@@ -237,7 +237,22 @@ body{letter-spacing:-.005em;-webkit-font-smoothing:antialiased}
 .cd.sl .dot{background:#000}.cd.sl .dot.lt{background:none;border-color:#000}.cd.sl .dot.dn{background:#777}
 .cl{display:flex;gap:16px;justify-content:center;margin-top:12px;font-size:12px;color:var(--mut)}
 .cl span{display:flex;align-items:center;gap:6px}.cl .dot{position:static;margin:0;display:inline-block}
+/* ===== Tab Ghi chú ===== */
+.nav{width:min(520px,calc(100% - 20px))}
+.nav::before{width:calc((100% - 28px)/5)}.nav button span{font-size:11px}
+.srch{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0 14px;margin-bottom:12px;grid-column:1/-1;color:var(--mut)}
+.srch input{background:none;border:0;padding:13px 0;color:#fff;box-shadow:none!important}
+.nlist{display:contents}
+.nc{cursor:pointer}.nc:active{transform:scale(.985)}
+.nc .note{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-top:10px}
+.nc .lk{display:flex;align-items:center;gap:6px;margin-top:10px;color:var(--mut);font-size:13px}
+.pn{color:#fff;opacity:.85;flex:none}
+.chk{display:flex;align-items:center;gap:10px;color:#fff;font-size:15px;margin-top:14px;cursor:pointer}
+.chk input{width:20px;height:20px;accent-color:#fff;flex:none}
+.hint{font-size:12px;color:var(--mut);margin-top:6px}
+.seg.wrap{flex-wrap:wrap}.seg.wrap button{font-size:14px;padding:9px 8px;flex:1 0 22%}
 </style>
+
 
 
 
@@ -288,12 +303,12 @@ const LV = { week: "Tuần", month: "Tháng", year: "Năm" };
 /* ---------- lưu trữ / đồng bộ ---------- */
 async function save() {
   if (LOCAL) localStorage.setItem("goals", JSON.stringify(goals));
-  else await fb.setDoc(fb.doc(fb.db, "users", uid), { goals });
+  else await fb.setDoc(fb.doc(fb.db, "users", uid), { goals }, { merge: true });
   render();
 }
 function start() {
-  if (LOCAL) { goals = JSON.parse(localStorage.getItem("goals") || "[]"); return render(); }
-  unsub = fb.onSnapshot(fb.doc(fb.db, "users", uid), s => { goals = s.exists() ? s.data().goals || [] : []; render(); });
+  if (LOCAL) { goals = JSON.parse(localStorage.getItem("goals") || "[]"); notes = JSON.parse(localStorage.getItem("notes") || "[]"); return render(); }
+  unsub = fb.onSnapshot(fb.doc(fb.db, "users", uid), s => { goals = s.exists() ? s.data().goals || [] : []; notes = s.exists() ? s.data().notes || [] : []; render(); });
 }
 if (LOCAL) setTimeout(start);
 else fb.onAuthStateChanged(fb.auth, u => {
@@ -321,7 +336,7 @@ function status(g) {
 var P = {
 target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
 home:'<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
-plus:'<path d="M5 12h14M12 5v14"/>',chev:'<path d="m6 9 6 6 6-6"/>',l:'<path d="m15 18-6-6 6-6"/>',r:'<path d="m9 18 6-6-6-6"/>',check:'<path d="M20 6 9 17l-5-5"/>',
+plus:'<path d="M5 12h14M12 5v14"/>',note:'<path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8z"/><path d="M15 3v6h6M8 13h8M8 17h5"/>',lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',search:'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',pin:'<path d="M12 17v5M9 10.8a2 2 0 0 1-1.1 1.8l-1.8.9A2 2 0 0 0 5 15.2V17h14v-1.8a2 2 0 0 0-1.1-1.8l-1.8-.9a2 2 0 0 1-1.1-1.8V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>',chev:'<path d="m6 9 6 6 6-6"/>',l:'<path d="m15 18-6-6 6-6"/>',r:'<path d="m9 18 6-6-6-6"/>',check:'<path d="M20 6 9 17l-5-5"/>',
 undo:'<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/>',
 edit:'<path d="M12 20h9"/><path d="M16.4 3.6a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
 trash:'<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>',
@@ -343,6 +358,7 @@ const esc = s => (s || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 /* ---------- giao diện ---------- */
 function render() {
   if (tab === "home") return renderHome();
+  if (tab === "note") return renderNotes();
   const t = today(), now = new Date();
   const inTab = goals.filter(g => g.level === tab);
   const dn = inTab.filter(g => g.done).length, lt = inTab.filter(g => !g.done && g.due < t).length, dg = inTab.length - dn - lt;
@@ -372,7 +388,7 @@ function render() {
 /* ---------- Tổng quan + điều hướng + hiệu ứng ---------- */
 var pop = null, seen = "";
 var WD = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
-var TABS = [["home", "Tổng quan", "home"], ["week", "Tuần", "week"], ["month", "Tháng", "month"], ["year", "Năm", "year"]];
+var TABS = [["home", "Tổng quan", "home"], ["week", "Tuần", "week"], ["month", "Tháng", "month"], ["year", "Năm", "year"], ["note", "Ghi chú", "note"]];
 const sico = c => c === "c-bad" ? "alert" : c === "c-ok" ? "trophy" : "clock";
 function topH() {
   const n = new Date(), h = tab === "home";
@@ -451,7 +467,7 @@ function bindAll() {
   const $ = s => document.querySelectorAll(s);
   $("#app [data-t]").forEach(b => b.onclick = () => go(b.dataset.t));
   $("[data-f]").forEach(b => b.onclick = () => { flt = b.dataset.f; render(); });
-  document.getElementById("add").onclick = () => edit();
+  document.getElementById("add").onclick = () => tab === "note" ? editNote("") : edit();
   const o = document.getElementById("out"); if (o) o.onclick = () => fb.signOut(fb.auth);
   $("[data-done]").forEach(b => b.onclick = e => { e.stopPropagation(); toggle(b.dataset.done); });
   $("[data-edit]").forEach(b => b.onclick = () => edit(b.dataset.edit));
@@ -506,6 +522,88 @@ function bindProg() {
     bar.onpointerup = () => { if (cur === null) return; bar.classList.remove("drag"); const p = cur; cur = null; setProg(id, p); };
     bar.onpointercancel = () => { cur = null; render(); };
   });
+}
+
+/* ---------- Ghi chú (lưu riêng, có mã hóa tùy chọn) ---------- */
+var notes = [], nf = "all", nq = "", pw = "";
+var NC = ["Tài liệu", "Mục tiêu", "Mật khẩu", "Khác"];
+const b64 = u => btoa(String.fromCharCode(...new Uint8Array(u))), ub = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function ckey(p, salt) {
+  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(p), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 150000, hash: "SHA-256" }, k, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+}
+async function enc(text, p) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await ckey(p, salt), new TextEncoder().encode(text));
+  return { s: b64(salt), i: b64(iv), c: b64(ct) };
+}
+async function dec(o, p) {
+  return new TextDecoder().decode(await crypto.subtle.decrypt({ name: "AES-GCM", iv: ub(o.i) }, await ckey(p, ub(o.s)), ub(o.c)));
+}
+function saveNotes() {
+  if (LOCAL) localStorage.setItem("notes", JSON.stringify(notes));
+  else fb.setDoc(fb.doc(fb.db, "users", uid), { notes }, { merge: true });
+  render();
+}
+function notesList() {
+  const q = nq.trim().toLowerCase();
+  const l = notes.filter(n => (nf === "all" || n.cat === nf) && (!q || (n.title + " " + (n.sec ? "" : n.body || "")).toLowerCase().includes(q)))
+    .sort((a, b) => (b.pin ? 1 : 0) - (a.pin ? 1 : 0) || (b.upd || "").localeCompare(a.upd || ""));
+  if (!l.length) return `<div class="empty">${ic("note", 44)}<br>${notes.length ? "Không tìm thấy ghi chú." : "Chưa có ghi chú.<br>Bấm nút + để lưu tài liệu, mục tiêu, mật khẩu..."}</div>`;
+  return l.map(n => `<div class="goal nc" data-note="${n.id}"><div class="row"><div class="gi">${ic(n.sec ? "lock" : "note", 20)}</div>
+    <div class="gm"><div class="t">${esc(n.title)}</div><div class="sub">${n.cat} · ${fmt((n.upd || today()).slice(0, 10))}</div></div>${n.pin ? `<span class="pn">${ic("pin", 16)}</span>` : ""}</div>
+    ${n.sec ? `<div class="lk">${ic("lock", 14)} Nội dung đã mã hóa</div>` : n.body ? `<div class="note">${esc(n.body.slice(0, 200))}</div>` : ""}</div>`).join("");
+}
+function bindNotes() { document.querySelectorAll("#nl [data-note]").forEach(c => c.onclick = () => editNote(c.dataset.note)); }
+function renderNotes() {
+  document.getElementById("app").innerHTML = `${topH()}
+  <div class="srch">${ic("search", 18)}<input id="ns" placeholder="Tìm ghi chú..." value="${esc(nq)}"></div>
+  <div class="chips">${["all", ...NC].map(k => `<button data-nf="${k}" class="${k === nf ? "on" : ""}">${k === "all" ? "Tất cả" : k}</button>`).join("")}</div>
+  <div id="nl" class="nlist">${notesList()}</div>
+  <button class="fab" id="add" title="Thêm ghi chú">${ic("plus", 28)}</button>`;
+  bindAll(); bindNotes();
+  document.querySelectorAll("[data-nf]").forEach(b => b.onclick = () => { nf = b.dataset.nf; renderNotes(); });
+  const q = document.getElementById("ns");
+  if (q) q.oninput = () => { nq = q.value; document.getElementById("nl").innerHTML = notesList(); bindNotes(); };
+}
+async function editNote(id) {
+  const n = notes.find(x => x.id === id) || { id: "", title: "", cat: "Tài liệu", pin: false, body: "" };
+  if (n.sec) { if (pw) { try { return noteForm(n, await dec(n.sec, pw)); } catch { } } return unlock(n); }
+  noteForm(n, n.body || "");
+}
+function unlock(n) {
+  const m = document.getElementById("modal"), s = document.getElementById("sheet"), $ = i => document.getElementById(i);
+  s.innerHTML = `<div class="row" style="align-items:center"><h1>Ghi chú đã khóa</h1><button class="ib" id="u-c">${ic("x", 18)}</button></div>
+  <div class="sub" style="margin-top:6px">${ic("lock", 14)} ${esc(n.title)}</div><label>Mật khẩu mở khóa</label><input type="password" id="u-p" autocomplete="current-password"><div class="err" id="u-e"></div>
+  <div class="btns" style="margin-top:8px"><button class="btn" id="u-o">${ic("lock", 18)}Mở khóa</button></div>`;
+  m.classList.add("on"); m.onclick = e => { if (e.target === m) m.classList.remove("on"); }; $("u-c").onclick = () => m.classList.remove("on");
+  const go = async () => { const v = $("u-p").value; try { const b = await dec(n.sec, v); pw = v; noteForm(n, b); } catch { $("u-e").textContent = "Sai mật khẩu, thử lại."; } };
+  $("u-o").onclick = go; $("u-p").onkeydown = e => { if (e.key === "Enter") go(); };
+}
+function noteForm(n, body) {
+  let cat = n.cat;
+  const m = document.getElementById("modal"), s = document.getElementById("sheet"), $ = i => document.getElementById(i);
+  s.innerHTML = `<div class="row" style="align-items:center"><h1>${n.id ? "Ghi chú" : "Ghi chú mới"}</h1><button class="ib" id="n-c">${ic("x", 18)}</button></div>
+  <label>Tiêu đề</label><input id="n-t" value="${esc(n.title)}" placeholder="VD: Tài khoản ngân hàng">
+  <label>Phân loại</label><div class="seg wrap">${NC.map(k => `<button type="button" data-nc="${k}" class="${k === cat ? "on" : ""}">${k}</button>`).join("")}</div>
+  <label>Nội dung</label><textarea id="n-b" style="min-height:190px" placeholder="Viết ghi chú, dán link tài liệu, mật khẩu...">${esc(body)}</textarea>
+  <label class="chk"><input type="checkbox" id="n-lock" ${n.sec ? "checked" : ""}>${ic("lock", 16)} Mã hóa nội dung (nên bật cho mật khẩu)</label>
+  <div id="n-pw" style="display:${n.sec ? "block" : "none"}"><label>Mật khẩu mở khóa — chỉ bạn biết, mất là không khôi phục được</label><input type="password" id="n-p" value="${esc(pw)}" autocomplete="new-password"><div class="hint">Tiêu đề không được mã hóa, đừng ghi mật khẩu vào tiêu đề.</div></div>
+  <label class="chk"><input type="checkbox" id="n-pin" ${n.pin ? "checked" : ""}>${ic("pin", 16)} Ghim lên đầu</label>
+  <div class="btns" style="margin-top:16px">${n.id ? `<button class="btn r" id="n-x" style="flex:none;padding:12px 16px">${ic("trash", 18)}</button>` : ""}<button class="btn g" id="n-y" style="flex:none;padding:12px 16px" title="Sao chép nội dung">${ic("copy", 18)}</button><button class="btn" id="n-ok">${ic("check", 18)}Lưu</button></div>`;
+  m.classList.add("on"); m.onclick = e => { if (e.target === m) m.classList.remove("on"); }; $("n-c").onclick = () => m.classList.remove("on");
+  const sync = () => $("n-pw").style.display = $("n-lock").checked ? "block" : "none";
+  $("n-lock").onchange = sync;
+  s.querySelectorAll("[data-nc]").forEach(b => b.onclick = () => { cat = b.dataset.nc; s.querySelectorAll("[data-nc]").forEach(x => x.classList.toggle("on", x === b)); if (cat === "Mật khẩu" && !n.id) { $("n-lock").checked = true; sync(); } });
+  $("n-y").onclick = async () => { try { await navigator.clipboard.writeText($("n-b").value); $("n-y").innerHTML = ic("check", 18); setTimeout(() => $("n-y").innerHTML = ic("copy", 18), 1200); } catch { $("n-b").select(); } };
+  if (n.id) $("n-x").onclick = () => { if (confirm("Xóa ghi chú này?")) { notes = notes.filter(x => x.id !== n.id); m.classList.remove("on"); saveNotes(); } };
+  $("n-ok").onclick = async () => {
+    const b = $("n-b").value, o = { ...n, title: $("n-t").value.trim() || "Không tiêu đề", cat, pin: $("n-pin").checked, upd: today() + "T" + new Date().toTimeString().slice(0, 8) };
+    if ($("n-lock").checked) { const p = $("n-p").value; if (p.length < 4) { $("n-p").focus(); $("n-p").placeholder = "Ít nhất 4 ký tự"; return; } o.sec = await enc(b, p); o.body = ""; pw = p; }
+    else { o.body = b; delete o.sec; }
+    if (n.id) notes = notes.map(x => x.id === n.id ? o : x); else { o.id = Date.now().toString(36); notes.push(o); }
+    m.classList.remove("on"); saveNotes();
+  };
 }
 
 function card(g) {
@@ -566,8 +664,8 @@ function edit(id, due) {
 
 /* ---------- đăng nhập ---------- */
 function authView() {
-  document.getElementById("nav")?.remove();
-  document.getElementById("app").innerHTML = `<div class="auth"><h1 style="font-size:30px"><img src="icons/logo.png" width="40" height="40" alt=""> Mục tiêu</h1><p class="sub">Đăng nhập để đồng bộ giữa iPhone và máy tính</p>
+  document.getElementById("nav")?.remove(); pw = ""; notes = [];
+  document.getElementById("app").innerHTML = `<div class="auth"><h1 style="font-size:30px"><img src="data:image/png;base64,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" width="40" height="40" alt=""> Mục tiêu</h1><p class="sub">Đăng nhập để đồng bộ giữa iPhone và máy tính</p>
   <input id="em" type="email" placeholder="Email" autocomplete="email"><input id="pw" type="password" placeholder="Mật khẩu (≥ 6 ký tự)" autocomplete="current-password">
   <div class="err" id="er"></div>
   <div class="btns"><button class="btn" id="li">Đăng nhập</button><button class="btn g" id="su">Đăng ký</button></div></div>`;
