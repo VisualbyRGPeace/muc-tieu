@@ -13,7 +13,8 @@
 <meta name="description" content="Quản lý mục tiêu tuần, tháng, năm. Đồng bộ iPhone và PC.">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="shortcut icon" href="favicon.ico">
 <title>Mục tiêu</title>
 <style>
 :root{--bg:#000000;--card:#0a0a0a;--card2:#141414;--line:#2a2a2a;--b:#ffffff;--b2:#d4d4d4;--tx:#ffffff;--mut:#8a8a8a;--ok:#ffffff;--bad:#ffffff;--warn:#a3a3a3}
@@ -197,7 +198,30 @@ body{letter-spacing:-.005em;-webkit-font-smoothing:antialiased}
 .sheet{animation:slide .5s cubic-bezier(.34,1.3,.64,1)}
 .btn:active,.ib:active,.chips button:active{transform:scale(.93)}
 .fab{animation:fabin .6s .3s cubic-bezier(.34,1.6,.64,1) both}@keyframes fabin{from{transform:scale(0) rotate(-90deg)}}
+.goal::before,.stat::before{content:none!important;display:none!important}
+/* ===== Tiến độ trực quan ===== */
+.prog{margin-top:14px}
+.ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.stg{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:5px 11px;border-radius:99px;background:#ffffff14;color:#ddd}
+.stg.near{background:#fff;color:#000}.stg.zero{color:var(--mut);background:#ffffff0a}
+.pv{font-size:13px;color:var(--mut)}.pv b{font-size:28px;font-weight:800;color:#fff;letter-spacing:-.04em}
+.pbar{position:relative;height:32px;margin:0 11px;cursor:pointer;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.trk{position:absolute;left:-11px;right:-11px;top:12px;height:8px;border-radius:99px;background:#1c1c1c;overflow:hidden}
+.fill{display:block;height:100%;background:linear-gradient(90deg,#7a7a7a,#fff);border-radius:99px;transition:width .35s cubic-bezier(.2,.8,.2,1)}
+.done .fill{background:#6b6b6b}
+.tk{position:absolute;top:12px;height:8px;width:2px;background:#000;opacity:.8;transform:translateX(-1px)}
+.mk{position:absolute;top:6px;height:20px;width:3px;border-radius:3px;background:#000;box-shadow:0 0 0 1.5px #fff;transform:translateX(-1.5px)}
+.knob{position:absolute;top:6px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 10px #000a,0 0 0 5px #ffffff22;transform:translateX(-50%);transition:left .35s cubic-bezier(.2,.8,.2,1),transform .2s}
+.drag .fill,.drag .knob{transition:none}.drag .knob{transform:translateX(-50%) scale(1.25)}
+.pf{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px;font-size:12px;color:var(--mut)}
+.stp{display:flex;gap:6px;flex:none}
+.stp button{border:1px solid var(--line);background:var(--card2);color:#fff;border-radius:10px;padding:7px 12px;font-size:13px;font-weight:700;cursor:pointer;transition:.15s}
+.stp button:hover{border-color:#fff}.stp button:active{transform:scale(.9)}
+@keyframes grow{from{width:0}}@keyframes kn{from{left:0}}
+.enter .fill{animation:grow 1s .3s cubic-bezier(.2,.8,.2,1) both}
+.enter .knob{animation:kn 1s .3s cubic-bezier(.2,.8,.2,1) both}
 </style>
+
 
 
 </head>
@@ -384,7 +408,7 @@ function bindAll() {
   const o = document.getElementById("out"); if (o) o.onclick = () => fb.signOut(fb.auth);
   $("[data-done]").forEach(b => b.onclick = e => { e.stopPropagation(); toggle(b.dataset.done); });
   $("[data-edit]").forEach(b => b.onclick = () => edit(b.dataset.edit));
-  setNav(); animate();
+  bindProg(); setNav(); animate();
 }
 function animate() {
   const app = document.getElementById("app"), first = seen !== tab; seen = tab;
@@ -401,6 +425,43 @@ function animate() {
   });
 }
 
+/* ---------- Tiến độ trực quan ---------- */
+function pace(g) {
+  if (!g.created) return null;
+  const tot = diff(g.due, g.created); if (tot <= 0) return null;
+  return Math.max(0, Math.min(100, Math.round(diff(today(), g.created) / tot * 100)));
+}
+function stageOf(p) { return p >= 100 ? ["Hoàn thành", ""] : p > 75 ? ["Sắp hoàn thành", "near"] : p > 50 ? ["Đã qua nửa chặng", ""] : p > 25 ? ["Đang tiến hành", ""] : p > 0 ? ["Khởi động", ""] : ["Chưa bắt đầu", "zero"]; }
+function progH(g) {
+  const p = g.progress, [st, k] = stageOf(p), ex = g.done ? null : pace(g);
+  let pc = g.done ? "Đã hoàn thành 100%" : p > 75 ? `Chỉ còn ${100 - p}% nữa là xong` : "";
+  if (ex !== null) { const d = p - ex; pc += (pc ? " · " : "") + `Nên đạt ~${ex}% · ` + (d >= 10 ? `Vượt ${d}%` : d <= -10 ? `Chậm ${-d}%` : "Đúng kế hoạch"); }
+  if (!pc) pc = "Kéo thanh hoặc bấm +10 để cập nhật";
+  return `<div class="prog"><div class="ph"><span class="stg ${k}">${st}</span><span class="pv"><b>${p}</b>%</span></div>
+  <div class="pbar" data-bar="${g.id}"><div class="trk"><i class="fill" style="width:${p}%"></i></div>${[25, 50, 75].map(m => `<em class="tk" style="left:${m}%"></em>`).join("")}${ex !== null ? `<em class="mk" style="left:${ex}%" title="Mức nên đạt hôm nay"></em>` : ""}<em class="knob" style="left:${p}%"></em></div>
+  <div class="pf"><span>${pc}</span><div class="stp"><button data-step="${g.id}" data-d="-10">−10</button><button data-step="${g.id}" data-d="10">+10</button></div></div></div>`;
+}
+function setProg(id, p) {
+  const g = goals.find(x => x.id === id); if (!g) return;
+  p = Math.max(0, Math.min(100, Math.round(p / 5) * 5)); if (p === g.progress) return;
+  g.progress = p;
+  if (p === 100 && !g.done) { g.done = true; g.doneAt = today(); pop = id; setTimeout(() => pop = null, 1000); }
+  else if (p < 100 && g.done) { g.done = false; g.doneAt = null; }
+  save();
+}
+function bindProg() {
+  document.querySelectorAll("[data-step]").forEach(b => b.onclick = e => { e.stopPropagation(); const g = goals.find(x => x.id === b.dataset.step); if (g) setProg(g.id, g.progress + +b.dataset.d); });
+  document.querySelectorAll("[data-bar]").forEach(bar => {
+    const id = bar.dataset.bar; let cur = null;
+    const pos = e => { const r = bar.getBoundingClientRect(); return Math.max(0, Math.min(100, Math.round((e.clientX - r.left) / r.width * 20) * 5)); };
+    const show = p => { bar.querySelector(".fill").style.width = p + "%"; bar.querySelector(".knob").style.left = p + "%"; bar.closest(".prog").querySelector(".pv b").textContent = p; };
+    bar.onpointerdown = e => { bar.setPointerCapture(e.pointerId); cur = pos(e); show(cur); bar.classList.add("drag"); };
+    bar.onpointermove = e => { if (cur !== null) { cur = pos(e); show(cur); } };
+    bar.onpointerup = () => { if (cur === null) return; bar.classList.remove("drag"); const p = cur; cur = null; setProg(id, p); };
+    bar.onpointercancel = () => { cur = null; render(); };
+  });
+}
+
 function card(g) {
   const [txt, cls] = status(g), f = Math.round(g.progress / 5);
   const si = cls === "c-bad" ? "alert" : cls === "c-ok" ? "trophy" : "clock";
@@ -409,8 +470,7 @@ function card(g) {
       <div class="gm"><div class="t">${esc(g.title)}</div><div class="sub">${ic("cal", 13)} Hạn ${fmt(g.due)}${g.done ? " · Xong " + fmt(g.doneAt) : ""}</div></div>
       <button class="ib" data-edit="${g.id}" title="Sửa / ghi chú">${ic("edit", 16)}</button></div>
     ${g.note ? `<div class="note">${esc(g.note)}</div>` : ""}
-    <div class="sq">${Array.from({ length: 20 }, (_, i) => `<i class="${i < f ? "f" : ""}" style="--k:${i}"></i>`).join("")}</div>
-    <div class="pct"><span>Tiến độ</span><span>${g.progress}%</span></div>
+    ${progH(g)}
     <div class="foot"><span class="chip ${cls}">${ic(si, 14)}${txt}</span>
       <button class="btn sm ${g.done ? "g" : ""}" data-done="${g.id}">${ic(g.done ? "undo" : "check", 16)}${g.done ? "Hoàn tác" : "Hoàn thành"}</button></div>
   </div>`;
@@ -460,7 +520,7 @@ function edit(id) {
 /* ---------- đăng nhập ---------- */
 function authView() {
   document.getElementById("nav")?.remove();
-  document.getElementById("app").innerHTML = `<div class="auth"><h1 style="font-size:30px">${ic("target",34)} Mục tiêu</h1><p class="sub">Đăng nhập để đồng bộ giữa iPhone và máy tính</p>
+  document.getElementById("app").innerHTML = `<div class="auth"><h1 style="font-size:30px"><img src="icons/logo.png" width="40" height="40" alt=""> Mục tiêu</h1><p class="sub">Đăng nhập để đồng bộ giữa iPhone và máy tính</p>
   <input id="em" type="email" placeholder="Email" autocomplete="email"><input id="pw" type="password" placeholder="Mật khẩu (≥ 6 ký tự)" autocomplete="current-password">
   <div class="err" id="er"></div>
   <div class="btns"><button class="btn" id="li">Đăng nhập</button><button class="btn g" id="su">Đăng ký</button></div></div>`;
